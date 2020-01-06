@@ -1,0 +1,48 @@
+1) Why is it so important that adjacent free blocks not be left as such? What would happen if they were permitted?
+-> If we don't merge two adjacent free blocks of memory, we will have two small separated block of memmory instead of a large block of memory. Therefore, when we want to allocate a block of memory that is larger than both two small separated block of memory but smaller than the size of the sum of those two block, we can't allocate those memory unless we merge two adjacent free memory.
+
+2) Which function(s) need to be concerned about adjacent free blocks?
+->The my_free function should be concerned about the adjacent free blocks since after we free a allocated block of memory, there is chances that there could be an another free block that is behind or after the block that we just unallocated. Therefore, we should consider merging those free blocks.
+
+3) Name one advantage of each strategy.
+->
+First Fit: Simple
+Best Fit: Memory efficient - Find the most fit block of memory
+Next Fit: Faster than First Fit since it starts at the last allocated memory
+Worst Fit: Avoid external fragmentation
+
+4) Run the stress test on all strategies, and look at the results (tests.out). What is the significance of "Average largest free block"? Which strategy generally has the best performance in this metric? Why do you think this is?
+-> The larger the average largest free block is, the more efficient that strategy is trying to coordinate its memory space. 
+Best-fit has the best performance since it intelligently selects the most suitable block of memory for incoming allocation.
+
+5) In the stress test results (see Question 4), what is the significance of "Average number of small blocks"? Which strategy generally has the best performance in this metric? Why do you think this is?
+-> The smaller the number of average small blocks of memory is, the less the external fragmentation occurs in the memory.
+Worst-fit has the best performance in this case because it creates less holes than other strategies (less fragmentation).
+Those holes are usually big, so other incoming allocations will have more chance to fit.
+
+6) Eventually, the many mallocs and frees produces many small blocks scattered across the memory pool. There may be enough space to allocate a new block, but not in one place. It is possible to compact the memory, so all the free blocks are moved to one large free block. How would you implement this in the system you have built?
+-> To compact the memory so that all free blocks are moved to one large free block, we need to connect all those already allocated memory blocks into one big sequence.
+-> This divides the memory space into two chunks, specifically, a "free" chunk of memory and the other is allocated memory chunk.
+
+7) If you did implement memory compaction, what changes would you need to make in how such a system is invoked (i.e. from a user's perspective)?
+-> In the case that a free memory block cannot be found to allocate new variable, the compact function will be invoked in order to gather all the holes that are free.
+Then, a new free block will be created from those old memory fragments and it "may" contain enough space for the new variable.
+
+8) How would you use the system you have built to implement realloc? (Brief explanation; no code)
+-> There are two possible cases:
++ case 1: shrinking the allocated memory: we can implement myfree to cut off part of the block of memory
++ case 2: extending the allocated memory: 2 subcases:
+	- subcase 1: if the memory block right next to it (say, block A) is free and the extra size that we need to extend is smaller than or equal to the size of block A,
+	then we can just merge block A into the current block.
+	- subcase 2: if the memory block right next to it is allocated or if the size of the block is insufficient, then we need to call the compact function (from step 6)
+	to gather unallocated fragments in the memory pool into one big chunk of memory. If it's lucky enough, the memory chunk created by the compact function may be able 
+	to contain the new size. Else, the system should inform users that it cannot reallocate memory.
+
+9) Which function(s) need to know which strategy is being used? Briefly explain why this/these and not others.
+-> initMem() and mymalloc() are the functions in mymem.c that need to know which strategy is being used.
+For initMem(), it needs the strategy passed in from the argument vector to initialize "myStrategy" for the whole program.
+For mymalloc(), it needs the strategy to decide which slot the new variable should be assigned to.
+
+10) Give one advantage of implementing memory management using a linked list over a bit array, where every bit tells whether its corresponding byte is allocated.
+-> In a linked list, for each node, we have pointers to keep track of its previous node and its next node. These are tools to tell us the location of the node in the list, which make operations on memory (e.g: reallocation, deallocation,..) so much easier. With a bit array, we cannot tell where the node that we want to modify is and may need the help from other variables that are not in the structure (these variables are not easy to manage and keep track of). 
+
